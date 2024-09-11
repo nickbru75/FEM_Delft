@@ -19,3 +19,9 @@ for el in range(Nelem):
 	print("the stress in element ", (el+1), " equals ", "%.5f" % stress[el], "MPa")
 	print("the displacement in element ", (el+1), " equals ", "%.5f" % u[el], "mm")
 print("The displacement of the final node is ", "%.5f" % u[-1], "mm")
+
+test = [3.828125e+10, 3.281250e+10, 2.734375e+10, 2.187500e+10]
+coeff = test[-1]/8.75
+for i in range(len(test)):
+	test[i] = test[i]/coeff
+print(test)

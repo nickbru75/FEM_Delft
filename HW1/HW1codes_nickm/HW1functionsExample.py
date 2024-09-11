@@ -12,7 +12,7 @@ class Shape:
 
 	def compute_sections(self):
 		l = self.length / self.n
-		h = np.array([self.w_1 - (self.w_1 - self.w_end)/self.n * i for i in range(self.n)])
+		h = np.array([self.w_1 - (self.w_1 - self.w_end)/self.n * (i+1) for i in range(self.n)])
 		areas = h * self.t
 		return areas
 
