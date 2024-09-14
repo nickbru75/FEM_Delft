@@ -17,16 +17,19 @@ class Shape:
 		return areas
 
 
-def calc_equivalent_stifness(sections: np.array, E: float, L: float):
-	return sections * E / L
+def calc_equivalent_stifness(sections: np.array, E: float, L: float, n: int):
+	return sections * E / (L/n)
 
 
-def calcStrain(E: float, stress: np.array):
-	return stress / E
+def calcStrain(u: np.array, L: float, n: int):
+	eps = np.zeros(len(u)-1)
+	for i in range(len(u)-1):
+		eps[i] = (u[i+1]-u[i]) / (L/n)
+	return eps
 
 
-def calcStress(F: float, A: np.array):
-	return F / A
+def calcStress(eps: np.array, E: float):
+	return eps*E
 
 
 def apply_boundary_conditions(K, F, BC):
@@ -56,10 +59,7 @@ def apply_boundary_conditions(K, F, BC):
 
 def calcDisp(L, Nelem, F, E, BC):
 	bar = Shape(L, Nelem, 50, 25, 3.125)
-	k = calc_equivalent_stifness(bar.sections, E, L)
-	print(bar.sections, k)
-	stress = calcStress(F, bar.sections)
-	strain = calcStrain(E, stress)
+	k = calc_equivalent_stifness(bar.sections, E, L, Nelem)
 	# Stiffness matrix
 	K = np.zeros((Nelem+1, Nelem+1))
 	for i in range(Nelem):
@@ -75,16 +75,18 @@ def calcDisp(L, Nelem, F, E, BC):
 	nodes_modified = [BC[0][i] for i in range(len(BC[0]))]
 	K, load = apply_boundary_conditions(K, load, BC)
 	u_partial = np.linalg.solve(K, load)
-	u = np.zeros(Nelem)
+	u = np.zeros(Nelem+1)
 	c_mod = 0
 	c_not_mod = 0
-	for i in range(Nelem):
+	for i in range(Nelem+1):
 		if i+1 in nodes_modified:
 			u[i] = BC[1][c_mod]
 			c_mod += 1
 		else:
 			u[i] = u_partial[c_not_mod]
 			c_not_mod += 1
+	strain = calcStrain(u, L, Nelem)
+	stress = calcStress(strain, E)
 
 	return u*1e6, strain, stress
 
