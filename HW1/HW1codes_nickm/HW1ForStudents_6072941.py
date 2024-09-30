@@ -1,4 +1,4 @@
-import HW1functionsExample as HW1f
+import HW1functions_6072941 as HW1f
 import numpy as np
 
 # input

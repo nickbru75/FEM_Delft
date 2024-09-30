@@ -3,8 +3,8 @@ import numpy as np
 
 # input
 E = 70e3 # E-modulus
-BC = np.array([[1, 2, 5, 6],[0,0,0,0]]) #boundary conditions; form: [degrees of freedom], [applied displacements]
-F = np.array([0, 0 ,0 , -1000, 0, 0]) # force vector
+BC = np.array([[0, 1, 5, 6], [0, 0, 0, 0]]) #boundary conditions; form: [degrees of freedom], [applied displacements]
+F = np.array([0, 0, 0, -1000, 0, 0]) # force vector
 Con = np.array([[1,2], [3,2]]) # connectivity matrix; form: [[element 1], [element 2],etc]
 NodePos = np.array([[0, 0], [125, 100], [0, 100]]) # node position; form: [[element 1],[element 2],etc]
 Area = np.array([10, 10]) # vector with the area for each element
