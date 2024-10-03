@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="tudat-space-1" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="dps-310-t" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="tudat-space-1" project-jdk-type="Python SDK" />
 </project>
