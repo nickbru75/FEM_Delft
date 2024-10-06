@@ -81,73 +81,72 @@ def quadratic_elements_problem(ltot, surface, elastic_module, coeff_a, coeff_b, 
     return u_complete
 
 
-def true_displacement_and_error(coeff_a, coeff_b, surface, elastic_module, sol, ltot, nelem):
+def true_displacement_and_error(coeff_a, coeff_b, surface, elastic_module, sol, ltot, nelem, number_points):
     n = 3 + (nelem - 1) * 2
     nodes = np.linspace(0, ltot, n)
-    true = 1/(surface*elastic_module)*(coeff_a/2 * nodes**2 + coeff_b/6 * nodes**3)
-    error_ = np.sqrt(np.sum((true-sol)**2))
-    return true, error_
+    l = ltot/nelem
+    nodes_dense = np.linspace(0, ltot, number_points*nelem - (nelem-1))
+    sol_dense = np.zeros_like(nodes_dense)
+    for ii in range(nelem):
+        x_vals = nodes[2*ii:2*ii+3]
+        y_vals = sol[2*ii:2*ii+3]
+
+        A = np.array([
+            [x_vals[0] ** 2, x_vals[0], 1],
+            [x_vals[1] ** 2, x_vals[1], 1],
+            [x_vals[2] ** 2, x_vals[2], 1]
+        ])
+        coeffs = np.linalg.solve(A, y_vals)
+        a_, b_, c_ = coeffs
+
+        def quadratic_polynomial(x):
+            return a_ * x ** 2 + b_ * x + c_
+
+        sol_dense[(number_points - 1) * ii:(number_points - 1) * ii + number_points] = quadratic_polynomial(
+            nodes_dense[(number_points - 1) * ii:(number_points - 1) * ii + (number_points)])
+
+    true = 1/(surface*elastic_module)*(-(coeff_a/2 * nodes_dense**2 + coeff_b/6 * nodes_dense**3)+nodes_dense*(coeff_a*ltot + coeff_b*ltot**2/2))
+    error_ = np.sqrt(np.sum((true-sol_dense)**2)/len(true))
+
+    return true, error_, sol_dense, nodes_dense
 
 
 # INPUT VALUES
 L = 500
 Area = 120
 E = 70e3
-a = 13
-b = 0.
-N = 100
-# values with solution online
-# L = 4
-# A = 0.003
-# E = 210e9
-# F = np.array([0, 5e3, -10e3, -7e3, 10e3])
-# N = 2
+a = 13.
+b = 0.13
+N = 5
 
-# COMPUTING FIXED NELEM PROBLEM
-n = 3 + (N - 1) * 2
-nodes = np.linspace(0, L, n)
 
 u = quadratic_elements_problem(L, Area, E, a, b, N)
-F = load_vector_shape_functions(a, b, N, L)
-print(u[-1])
+u_true, err, u_dense, n_dense = true_displacement_and_error(a, b, Area, E, u, L, N, 500)
 plt.figure(figsize=(8, 5))
-F_dummy = a*nodes + b/2*nodes**2
-F_true = np.zeros_like(nodes)
-F_true[1:] = np.diff(F_dummy)
-plt.plot(nodes, F, label='Computed')
-plt.plot(nodes, F_true, label='Analytical')
-plt.legend()
-plt.grid()
-plt.xlabel('Number of elements [-]')
-plt.ylabel('Force [N]')
-plt.savefig('force.png', dpi=200)
-
-u_true, error = true_displacement_and_error(a, b, Area, E, u, L, N)
-print(u_true[-1])
-plt.figure(figsize=(8, 5))
-plt.plot(nodes, u, label='Computed')
-plt.plot(nodes, u_true, label='Analytical')
+plt.plot(n_dense, u_dense, label='Computed')
+plt.plot(n_dense, u_true, 'r--', label='Analytical')
 plt.legend()
 plt.grid()
 plt.xlabel('Number of elements [-]')
 plt.ylabel('Displacement of last node [mm]')
+plt.title('Computed solution with {} quadratic elements'.format(N))
 plt.savefig('solution_vs_true.png', dpi=200)
 
+
 # CONVERGENCE PROBLEM
-# nmax = 100
-# u_end = np.zeros(nmax)
-# err = np.zeros(nmax)
-# for i in range(1, nmax+1):
-#     u = quadratic_elements_problem(L, Area, E, a, b, i)
-#     u_end[i-1] = u[-1]
-#     u_true, error = true_displacement_and_error(a, b, Area, E, u, L, i)
-#     err[i-1] = error
-# plt.figure(figsize=(8, 5))
-# plt.plot(np.arange(1, nmax+1), u_end)
-# plt.plot(np.arange(1, nmax+1), err)
-# plt.grid()
-# plt.xlabel('Number of elements [-]')
-# plt.ylabel('Displacement of last node [mm]')
-# plt.title('Convergence Study')
-# plt.savefig('convergence.png', dpi=200)
+nmax = 10
+u_end = np.zeros(nmax)
+err = np.zeros(nmax)
+for i in range(1, nmax+1):
+    u = quadratic_elements_problem(L, Area, E, a, b, i)
+    u_end[i-1] = u[-1]
+    u_true, error, u_dense, n_dense = true_displacement_and_error(a, b, Area, E, u, L, i, 500)
+    err[i-1] = error
+plt.figure(figsize=(8, 5))
+plt.plot(np.arange(1, nmax+1), err)
+plt.grid()
+plt.xlabel('Number of elements [-]')
+plt.ylabel('RMS difference from true solution [mm]')
+plt.title('Convergence Study')
+plt.savefig('convergence.png', dpi=200)
 
